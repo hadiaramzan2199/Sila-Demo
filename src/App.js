@@ -30,13 +30,13 @@ function App() {
 
     // Dummy data for demonstration
     const dummyData = [
-      { geometry: [[73.04748990706791, 33.7188512743977], [73.05096030287353, 33.7206765900484], [73.05284860647366, 33.71808717725303], [73.04958235159779, 33.716176904638964], [73.04748990706791, 33.7188512743977]], attributes: { locationName: 'College', parkings: 10, distanceFromRoad: 50, area: 500 } },
-      { geometry: [[73.05238928939387, 33.7194031181519], [73.05540036810757, 33.7209737308292], [73.05605106732114, 33.71948801686911], [73.0534227528507, 33.71810840231141], [73.05238928939387, 33.7194031181519]], attributes: { locationName: 'Resturant', parkings: 20, distanceFromRoad: 150, area: 1200 } },
-      { geometry: [[73.05593623806213, 33.72123903421084], [73.05786281808656, 33.72223656750141], [73.05904938724069, 33.721058628016245], [73.05686763105408, 33.71999740743231], [73.05593623806213, 33.72123903421084]], attributes: { locationName: 'Supermarket', parkings: 5, distanceFromRoad: 80, area: 800 } },
-      { geometry: [[73.05791385332529, 33.72226840349244], [73.05879421108482, 33.722714105944156], [73.0590876636713, 33.72210922348456, ], [73.05832213518477, 33.7218014746323], [73.05791385332529, 33.72226840349244]], attributes: { locationName: 'Bookstore', parkings: 15, distanceFromRoad: 120, area: 600 } },
-      { geometry: [[73.0592024929512, 33.72287328484551], [73.05996802143774, 33.72327653670277], [73.06017216236748, 33.722671658206494], [73.05959801600257, 33.722427583220316], [73.0592024929512, 33.72287328484551]], attributes: { locationName: 'Cafe', parkings: 0, distanceFromRoad: 200, area: 400 } },
-      { geometry: [[73.05569301667829, 33.724226914924905], [73.0596683074084, 33.72622078333367], [73.06027522202369, 33.723987142819176], [73.05716216144258, 33.722332018572274], [73.05569301667829, 33.724226914924905]], attributes: { locationName: 'Playground', parkings: 3, distanceFromRoad: 90, area: 700 } },
-      { geometry: [[73.0542914295995, 33.71816140788522], [73.05619249200774, 33.71907407789577], [73.05639663293746, 33.71855406942779], [73.05468695265087, 33.71769445668606], [73.0542914295995, 33.71816140788522]], attributes: { locationName: 'Hotel', parkings: 10, distanceFromRoad: 150, area: 1000 } },
+      { geometry: [[73.04748990706791, 33.7188512743977], [73.05096030287353, 33.7206765900484], [73.05284860647366, 33.71808717725303], [73.04958235159779, 33.716176904638964], [73.04748990706791, 33.7188512743977]], attributes: { locationName: 'College', parkings: 1, distanceFromRoad: 10, area: 100 } },
+      { geometry: [[73.05238928939387, 33.7194031181519], [73.05540036810757, 33.7209737308292], [73.05605106732114, 33.71948801686911], [73.0534227528507, 33.71810840231141], [73.05238928939387, 33.7194031181519]], attributes: { locationName: 'Supermarket', parkings: 2, distanceFromRoad: 20, area: 200 } },
+      { geometry: [[73.05593623806213, 33.72123903421084], [73.05786281808656, 33.72223656750141], [73.05904938724069, 33.721058628016245], [73.05686763105408, 33.71999740743231], [73.05593623806213, 33.72123903421084]], attributes: { locationName: 'Cafe', parkings: 3, distanceFromRoad: 30, area: 300 } },
+      { geometry: [[73.05791385332529, 33.72226840349244], [73.05879421108482, 33.722714105944156], [73.0590876636713, 33.72210922348456, ], [73.05832213518477, 33.7218014746323], [73.05791385332529, 33.72226840349244]], attributes: { locationName: 'Playground', parkings: 4, distanceFromRoad: 40, area: 400 } },
+      { geometry: [[73.0592024929512, 33.72287328484551], [73.05996802143774, 33.72327653670277], [73.06017216236748, 33.722671658206494], [73.05959801600257, 33.722427583220316], [73.0592024929512, 33.72287328484551]], attributes: { locationName: 'Bookstore', parkings: 5, distanceFromRoad: 50, area: 500 } },
+      { geometry: [[73.05569301667829, 33.724226914924905], [73.0596683074084, 33.72622078333367], [73.06027522202369, 33.723987142819176], [73.05716216144258, 33.722332018572274], [73.05569301667829, 33.724226914924905]], attributes: { locationName: 'Restaurant', parkings: 6, distanceFromRoad: 60, area: 600 } },
+      { geometry: [[73.0542914295995, 33.71816140788522], [73.05619249200774, 33.71907407789577], [73.05639663293746, 33.71855406942779], [73.05468695265087, 33.71769445668606], [73.0542914295995, 33.71816140788522]], attributes: { locationName: 'Hotel', parkings: 7, distanceFromRoad: 70, area: 700 } },
 
       // Add more dummy data as needed
     ];
@@ -44,11 +44,6 @@ function App() {
 
     // Add dummy polygons to the map
     dummyData.forEach(data => {
-      const polygon = new Polygon({
-        rings: data.geometry,
-        spatialReference: view.spatialReference
-      });
-
       const symbol = new SimpleFillSymbol({
         color: [255, 0, 0, 0.5],
         outline: new SimpleLineSymbol({
@@ -58,7 +53,10 @@ function App() {
       });
 
       const graphic = new Graphic({
-        geometry: polygon,
+        geometry: new Polygon({
+          rings: data.geometry,
+          spatialReference: view.spatialReference
+        }),
         symbol,
         attributes: data.attributes
       });
@@ -74,8 +72,30 @@ function App() {
   }, []);
 
   const handleSearch = () => {
+    console.log('Search button clicked');
+    
+    // Validate filter fields
+    if (
+      selectedLocation.trim() === '' &&
+      selectedParkings === 0 &&
+      selectedDistance === 0 &&
+      selectedArea === 0
+    ) {
+      // Display an alert or throw an error
+      alert('Select filter before searching');
+      return;
+    }
+  
+    // Iterate through existing graphics and update their symbols
     graphicsLayer.graphics.forEach(graphic => {
       const attributes = graphic.attributes;
+      console.log('Graphic Attributes:', attributes);
+      console.log('Selected Filters:', {
+        selectedLocation,
+        selectedParkings,
+        selectedDistance,
+        selectedArea,
+      });
   
       let symbol;
   
@@ -105,17 +125,18 @@ function App() {
         });
       }
   
+      // Update the symbol directly on the existing graphic
       graphic.symbol = symbol;
     });
   };
   
 
-  // State for user input
-  const [selectedLocation, setSelectedLocation] = useState('');
-  const [selectedParkings, setSelectedParkings] = useState(0);
-  const [selectedDistance, setSelectedDistance] = useState(0);
-  const [selectedArea, setSelectedArea] = useState(0);
-
+    // State for user input
+    const [selectedLocation, setSelectedLocation] = useState('');
+    const [selectedParkings, setSelectedParkings] = useState(0);
+    const [selectedDistance, setSelectedDistance] = useState(0);
+    const [selectedArea, setSelectedArea] = useState(0);
+  
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
       {/* Sidebar */}
@@ -215,10 +236,16 @@ function App() {
 
       {/* Map */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        <div ref={mapDiv} style={{ position: 'absolute', top: 0, bottom: 0, left: '0px', right: 0 }} />
+        <div ref={mapDiv} style={{ position: 'absolute', top: 0, bottom: 0, left: '0px', right: 0}} />
       </div>
     </div>
   );
 }
 
 export default App;
+
+
+
+
+
+
