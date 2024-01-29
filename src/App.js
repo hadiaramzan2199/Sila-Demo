@@ -6,6 +6,8 @@ import Polygon from '@arcgis/core/geometry/Polygon';
 import SimpleFillSymbol from '@arcgis/core/symbols/SimpleFillSymbol';
 import SimpleLineSymbol from '@arcgis/core/symbols/SimpleLineSymbol';
 import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer';
+import TextSymbol from '@arcgis/core/symbols/TextSymbol';
+import Font from '@arcgis/core/symbols/Font';
 import logo from './logo.png';
 
 function App() {
@@ -17,18 +19,24 @@ function App() {
   const [selectedArea, setSelectedArea] = useState(0);
   const [selectedPollutionType, setSelectedPollutionType] = useState('');
   const [hoveredGraphic, setHoveredGraphic] = useState(null);
+  const [selectedGraphic, setSelectedGraphic] = useState(null);
+  const [mapView, setmapView] = useState(null);
   
   useEffect(() => {
+    // Esri Gray Basemap
     const map = new Map({
       basemap: 'dark-gray-vector'
     });
 
+    // Setting he mapview
     const view = new MapView({
       map,
       container: mapDiv.current,
       center: [73.05819270866068, 33.72177377637208], 
       zoom: 14 
     });
+
+    setmapView(view);
 
     const graphicsLayer = new GraphicsLayer();
     view.map.add(graphicsLayer);
@@ -69,18 +77,28 @@ function App() {
       graphicsLayer.add(graphic);
     });
 
+    // Hover functionality
     view.on('pointer-move', (event) => {
       view.hitTest(event).then((response) => {
         const graphic = response.results[0]?.graphic;
         setHoveredGraphic(graphic);
       });
     });
-    
+
+    // Click functionality
+    view.on('click', event => {
+      view.hitTest(event).then(response => {
+        const clickedGraphic = response.results[0]?.graphic;
+        handlePolygonClick(clickedGraphic, graphicsLayer, view);
+      });
+    });
+
     return () => {
       if (view) {
         view.destroy();
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -129,7 +147,101 @@ function App() {
     return color;
   };
   
+  const handlePolygonClick = (clickedGraphic, layer, view) => {
+    setSelectedGraphic(clickedGraphic);
   
+    // Remove labels for all graphics
+    layer.graphics.forEach(graphic => {
+      removeLabel(view, graphic);
+    });
+  
+    // Reset the color of all graphics
+    const symbol = new SimpleFillSymbol({
+      color: [255, 255, 0, 0.5], // Yellow color
+      outline: new SimpleLineSymbol({
+        color: [255, 255, 0],
+        width: 1
+      })
+    });
+  
+    layer.graphics.forEach(graphic => {
+      // Check if the graphic is the clicked one
+      if (graphic.uid === clickedGraphic.uid) {
+        // Set the color of the clicked graphic to blue
+        const blueSymbol = new SimpleFillSymbol({
+          color: [0, 0, 255, 0.5], // Blue color
+          outline: new SimpleLineSymbol({
+            color: [0, 0, 255],
+            width: 1
+          })
+        });
+        clickedGraphic.symbol = blueSymbol;
+  
+        // Update the traffic flow percentage label for the clicked graphic
+        const trafficFlowPercentage = calculateDummyTrafficFlowPercentage();
+        const attributes = { ...clickedGraphic.attributes, trafficFlowPercentage };
+        clickedGraphic.attributes = attributes;
+  
+        // Display the label for the clicked graphic
+        // Note: We don't display label for the clicked polygon in this case
+      } else {
+        // Apply yellow color to unclicked polygons
+        graphic.symbol = symbol;
+  
+        // Display label for unclicked polygons
+        displayLabel(view, graphic, calculateDummyTrafficFlowPercentage());
+      }
+    });
+  };
+
+  const displayLabel = (view, graphic, text) => {
+    // Check if graphic is defined, and if its geometry is defined
+    if (graphic && graphic.geometry) {
+      const geometry = graphic.geometry;
+  
+      // Create a point at the centroid of the graphic's geometry
+      const point = geometry.centroid || geometry.extent.center;
+  
+      const font = new Font({
+        size: 10,
+        family: 'Arial',
+        weight: 'bold',
+      });
+      
+      const labeledText = text + '%';
+
+      const textSymbol = new TextSymbol({
+        text:labeledText,
+        font,
+        color: [255, 255, 255, 1],
+        xoffset: 0, 
+        yoffset: 0, 
+      });
+  
+      const labelGraphic = new Graphic({
+        geometry: point,
+        symbol: textSymbol,
+        attributes: { label: true },
+      });
+  
+      view.graphics.add(labelGraphic);
+      graphic.attributes.label = true; // Set label attribute for the clicked graphic
+    }
+  };
+  
+  const removeLabel = (view, graphic) => {
+    if (graphic.geometry.centroid && graphic.attributes.label) {
+      // Remove labels associated with the graphic
+      const labels = view.graphics.filter(g => g.attributes && g.attributes.label && g.geometry.equals(graphic.geometry.centroid));
+      view.graphics.removeMany(labels);
+  
+      graphic.attributes.label = false; // Remove label attribute for the unclicked graphic
+    }
+  };
+  
+  const calculateDummyTrafficFlowPercentage = () => {
+    return Math.floor(Math.random() * 100);
+  };
 
   const handleSearch = () => {
     console.log('Search button clicked');
@@ -314,25 +426,24 @@ function App() {
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         <div ref={mapDiv} style={{ position: 'absolute', top: 0, bottom: 0, left: '0px', right: 0}} />
         {/* Tooltip for pollution values */}
-        {hoveredGraphic && hoveredGraphic.geometry && (
-          <div
-            style={{
-              position: 'absolute',
-              top: hoveredGraphic.geometry.centroid.latitude, // Use the centroid latitude
-              left: hoveredGraphic.geometry.centroid.longitude,
-              transform: 'translate(150%, 1100%)',
-              background: 'rgba(255, 255, 255, 0.8)',
-              padding: '5px',
-              borderRadius: '5px',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-              fontSize: '10px', // Adjust the font size as needed
-            }}
-          >
-            <p style={{ margin: 0 }}>{selectedPollutionType} Intensity: {hoveredGraphic.attributes.pollution[selectedPollutionType]} %</p>
-          </div>
-        )}
-
-
+        {hoveredGraphic && hoveredGraphic.geometry && selectedPollutionType && mapView &&(
+        <div
+          style={{
+            position: 'absolute',
+            top: mapView.toScreen(hoveredGraphic.geometry.centroid).y - 50, // Adjust the offset as needed
+            left: mapView.toScreen(hoveredGraphic.geometry.centroid).x,
+            background: 'rgba(255, 255, 255, 0.8)',
+            padding: '5px',
+            borderRadius: '5px',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            fontSize: '10px', // Adjust the font size as needed
+          }}
+        >
+          <p style={{ margin: 0 }}>
+            {selectedPollutionType} Intensity: {hoveredGraphic.attributes.pollution[selectedPollutionType]} %
+          </p>
+        </div>
+      )}
 
       </div>
     </div>
